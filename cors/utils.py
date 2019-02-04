@@ -1,8 +1,7 @@
+from past.builtins import basestring
+
+from cors.definitions import CORS_RESPONSE_HEADERS, SIMPLE_RESPONSE_HEADERS
 from cors.errors import AccessControlError
-from cors.definitions import (
-    CORS_RESPONSE_HEADERS,
-    SIMPLE_RESPONSE_HEADERS,
-)
 
 
 class HeadersDict(dict):

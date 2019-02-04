@@ -1,13 +1,10 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import requests
 
 from cors.errors import AccessControlError
+from cors.preflight import check_origin, prepare_preflight
 from cors.utils import ProtectedHTTPHeaders
-from cors.preflight import (
-    check_origin,
-    prepare_preflight,
-)
 
 
 def send(request, session=None, skip_checks_on_server_error=True, **kwargs):
@@ -21,9 +18,6 @@ def send(request, session=None, skip_checks_on_server_error=True, **kwargs):
     session = session or requests.Session()
     preflight, checks = prepare_preflight(request)
 
-    print request
-    print preflight, checks
-
     if preflight is not None:
         preflight = requests.Request(
             preflight.method,
@@ -34,7 +28,8 @@ def send(request, session=None, skip_checks_on_server_error=True, **kwargs):
         response = session.send(preflight)
         if not response.ok:
             raise AccessControlError(
-                "Pre-flight check failed",
+                "Pre-flight check failed. Response status: %s: %s, Headers: %s" % (
+                    response.status_code, response.reason, response.headers),
                 preflight.url,
                 preflight.method,
                 preflight.headers)

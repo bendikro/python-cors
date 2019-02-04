@@ -2,24 +2,23 @@ import unittest
 
 from cors import definitions
 
+
 class Function_normalize_list_Tests(unittest.TestCase):
+
     def test_normalize_list(self):
         list_ = "Foo-Bar, Baz, QUX"
-
         normalized = definitions._normalize_list(list_)
-
         self.assertEqual(normalized, ["foo-bar", "baz", "qux"])
 
     def test_normalize_is_idempotent(self):
         list_ = "Foo-bar, Baz, QUX"
-
         one = definitions._normalize_list(list_)
         two = definitions._normalize_list(one)
-
         self.assertEqual(one, two)
 
 
 class Function_normalize_origin_url_Tests(unittest.TestCase):
+
     def test_url_without_port(self):
         http = "http://foo/bar?baz=qux#quux"
         https = "https://foo/bar?baz=qux#quux"

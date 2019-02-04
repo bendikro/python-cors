@@ -1,18 +1,15 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import unittest
 
 import mock
 
+from cors import errors, preflight, utils
 from cors.clients import requests
-from cors import (
-    errors,
-    preflight,
-    utils
-)
 
 
-def _request(url="http://example.com", method="GET", headers=None, origin="http://example.com", **kwargs):
+def _request(url="http://example.com", method="GET", headers=None, origin="http://example.com",
+             **kwargs):
     request = mock.MagicMock(name="mock_request")
     request._response = mock.MagicMock()
     request.kwargs = {"_response": request._response}
@@ -26,14 +23,17 @@ def _request(url="http://example.com", method="GET", headers=None, origin="http:
         request.headers["origin"] = origin
     return request
 
+
 def _response(request=None, headers=None):
     response = mock.MagicMock()
     response.request = request or _request()
     response.headers = utils.HeadersDict(headers or {})
     return response
 
+
 def _session():
     session = mock.MagicMock()
+
     def send_(request):
         return getattr(request, "_response", mock.MagicMock())
     session.send = mock.MagicMock(wraps=send_)
@@ -56,6 +56,14 @@ class Function_send_Tests(unittest.TestCase):
     def test_preflight_request_failed(self, prepare, _):
         response = _response()
         response.ok = False
+        response.status_code = 404
+        response.reason = "Not Found"
+        response.headers = {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Content-Length': '19',
+            'X-Content-Type-Options': 'nosniff',
+            'Date': 'Mon, 04 Feb 2019 15:26:29 GMT'
+        }
         prepare.return_value = (_request(), [])
         session = mock.MagicMock()
         session.send.return_value = response
@@ -67,7 +75,10 @@ class Function_send_Tests(unittest.TestCase):
         with self.assertRaises(errors.AccessControlError) as context:
             requests.send(request, session)
 
-        self.assertEqual(context.exception.message, "Pre-flight check failed")
+        expected_message = "Pre-flight check failed. Response status: %s: %s, Headers: %s" % (
+            response.status_code, response.reason, response.headers)
+
+        self.assertEqual(str(context.exception), expected_message)
 
     @mock.patch("requests.Request", wraps=_request)
     @mock.patch("cors.clients.requests.prepare_preflight")
@@ -81,7 +92,7 @@ class Function_send_Tests(unittest.TestCase):
             requests.send(request, _session())
             self.assertTrue(check_b.call_count > 0)
 
-        self.assertEqual(context.exception.message, "foo")
+        self.assertEqual(str(context.exception), "foo")
         self.assertEqual(check_a.call_count, 1)
 
     @mock.patch("requests.Request", wraps=_request)

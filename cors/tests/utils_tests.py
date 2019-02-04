@@ -3,7 +3,9 @@ import unittest
 from cors.errors import AccessControlError
 from cors.utils import ProtectedHTTPHeaders
 
+
 class ProtectedHTTPHeadersTests(unittest.TestCase):
+
     def setUp(self):
         self.headers = {
             "Content-Length": "20",
@@ -31,7 +33,7 @@ class ProtectedHTTPHeadersTests(unittest.TestCase):
         with self.assertRaises(AccessControlError) as context:
             _ = self.protected["Content-Length"]
 
-        self.assertIn("not allowed", context.exception.message)
+        self.assertIn("not allowed", str(context.exception))
 
     def test_exposed_unset_header(self):
         token = self.protected.get("X-Auth-Token", "aaaa-bbbb-ccc-dddd")
@@ -46,5 +48,4 @@ class ProtectedHTTPHeadersTests(unittest.TestCase):
         with self.assertRaises(AccessControlError) as context:
             _ = protected["Content-Length"]
 
-        self.assertIn("not allowed", context.exception.message)
-
+        self.assertIn("Access to header 'Content-Length' not allowed.", str(context.exception))

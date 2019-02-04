@@ -1,21 +1,19 @@
-from cors.errors import AccessControlError
-from cors.definitions import (
-    CORS_RESPONSE_HEADERS,
-    SIMPLE_METHODS,
-    SIMPLE_RESPONSE_HEADERS,
-    SIMPLE_REQUEST_CONTENT_TYPES,
-    is_same_origin,
-    is_simple_method,
-    is_simple_content_type,
-    get_prohibited_headers,
-)
-from cors.utils import (
-    HeadersDict,
-    Request,
-)
+try:
+    unicode('')
+except NameError:
+    # Python 3
+    unicode = str
+
+from cors.definitions import (CORS_RESPONSE_HEADERS, SIMPLE_METHODS, SIMPLE_REQUEST_CONTENT_TYPES,
+                              SIMPLE_RESPONSE_HEADERS, get_prohibited_headers, is_same_origin,
+                              is_simple_content_type, is_simple_method)
+from cors.errors import AccessControlError, CORSError
+from cors.utils import HeadersDict, Request
+
 
 def format_header_field(header):
     return "-".join(map(str.capitalize, header.split("-")))
+
 
 def check_origin(response, prepared_request):
     """
@@ -27,13 +25,18 @@ def check_origin(response, prepared_request):
     if is_same_origin(request):
         return
 
+    if "origin" not in headers:
+        raise CORSError("Missing mandatory header 'Origin'")
+
     origin = headers["origin"]
+
     if response.headers.get("Access-Control-Allow-Origin") not in ("*", origin):
         raise AccessControlError(
             "Origin %r not allowed for resource %r" % (origin, request.url),
             request.url,
             request.method,
             request.headers)
+
 
 def check_method(response, prepared_request):
     """
@@ -43,9 +46,9 @@ def check_method(response, prepared_request):
     request = prepared_request
     simple = request.method.upper() in SIMPLE_METHODS
     irregular_post = (
-        request.method.upper() == "POST"
-        and "Content-Type" in request.headers
-        and request.headers["Content-Type"] not in SIMPLE_REQUEST_CONTENT_TYPES
+        request.method.upper() == "POST" and
+        "Content-Type" in request.headers and
+        request.headers["Content-Type"] not in SIMPLE_REQUEST_CONTENT_TYPES
     )
 
     if simple and not irregular_post:
@@ -63,6 +66,7 @@ def check_method(response, prepared_request):
             request.url,
             request.method,
             request.headers)
+
 
 def check_headers(response, prepared_request):
     """
@@ -85,10 +89,12 @@ def check_headers(response, prepared_request):
         request.method,
         request.headers)
 
+
 def prepare_preflight_allowed_origin(request):
     if is_same_origin(request):
         return {}, []
     return {}, [check_origin]
+
 
 def prepare_preflight_allowed_methods(request):
     headers = {}
@@ -104,6 +110,7 @@ def prepare_preflight_allowed_methods(request):
 
     return headers, checks
 
+
 def prepare_preflight_allowed_headers(request):
     needed = get_prohibited_headers(request, {})
     needed = {format_header_field(h) for h in needed}
@@ -118,6 +125,7 @@ def prepare_preflight_allowed_headers(request):
         {"Access-Control-Request-Headers": ",".join(needed)},
         [check_headers]
     )
+
 
 def prepare_preflight(request):
     """
@@ -152,6 +160,7 @@ def prepare_preflight(request):
 
     return preflight, checks
 
+
 def generate_acceptable_preflight_response_headers(requested):
     """
     Given preflight request headers generate necessary CORS response headers.
@@ -168,6 +177,7 @@ def generate_acceptable_preflight_response_headers(requested):
         response["Access-Control-Allow-Headers"] = headers
 
     return response
+
 
 def generate_acceptable_actual_response_headers(response, origin=None):
     """
