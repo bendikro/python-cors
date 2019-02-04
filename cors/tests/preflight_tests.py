@@ -1,16 +1,13 @@
-import mock
 import unittest
 
-from cors import (
-    errors,
-    preflight,
-)
-from cors.utils import (
-    HeadersDict,
-    Request,
-)
+import mock
 
-def _request(url="http://example.com", method="GET", headers=None, origin="http://example.com", **kwargs):
+from cors import preflight
+from cors.utils import HeadersDict, Request
+
+
+def _request(url="http://example.com", method="GET", headers=None, origin="http://example.com",
+             **kwargs):
     request = mock.MagicMock(name="mock_request")
     request._response = mock.MagicMock()
     request.kwargs = {"_response": request._response}
@@ -24,14 +21,17 @@ def _request(url="http://example.com", method="GET", headers=None, origin="http:
         request.headers["origin"] = origin
     return request
 
+
 def _response(request=None, headers=None):
     response = mock.MagicMock()
     response.request = request or _request()
     response.headers = HeadersDict(headers or {})
     return response
 
+
 def _session():
     session = mock.MagicMock()
+
     def send(request):
         return getattr(request, "_response", mock.MagicMock())
     session.send = mock.MagicMock(wraps=send)
@@ -47,7 +47,7 @@ class Function_check_origin_Tests(unittest.TestCase):
         with self.assertRaises(preflight.AccessControlError) as context:
             preflight.check_origin(_response(), _request(origin="http://foo"))
 
-        self.assertIn("not allowed", context.exception.message)
+        self.assertIn("not allowed", str(context.exception))
 
     def test_wildcard_origin(self):
         response = _response(headers={"Access-Control-Allow-Origin": "*"})
@@ -67,7 +67,7 @@ class Function_check_method_Tests(unittest.TestCase):
             preflight.check_method(_response(), _request(method="DELETE"))
 
         self.assertRegexpMatches(
-            context.exception.message,
+            str(context.exception),
             "Method '.+' not allowed for resource '.*'")
 
     @staticmethod
@@ -90,7 +90,7 @@ class Function_check_headers_Tests(unittest.TestCase):
                 _request(headers={"X-Auth-Token": "foo"}))
 
         self.assertRegexpMatches(
-            context.exception.message,
+            str(context.exception),
             "Headers .* not allowed")
 
     def test_allowed_headers(self):
@@ -113,7 +113,7 @@ class Function_check_headers_Tests(unittest.TestCase):
             preflight.check_headers(response, request)
 
         self.assertRegexpMatches(
-            context.exception.message,
+            str(context.exception),
             "Headers .+ not allowed for resource '.*'")
 
 

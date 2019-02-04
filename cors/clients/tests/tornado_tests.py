@@ -4,15 +4,8 @@ from tornado.httpclient import HTTPRequest
 from tornado.testing import AsyncHTTPTestCase, gen_test
 from tornado.web import Application, HTTPError, RequestHandler
 
-from cors import (
-    errors,
-    preflight,
-    utils,
-)
-from cors.clients.tornado import (
-    WrappedClient,
-    normalize_request,
-)
+from cors import errors, utils
+from cors.clients.tornado import WrappedClient, normalize_request
 
 
 class Handler(RequestHandler):
@@ -28,6 +21,7 @@ class Handler(RequestHandler):
 
 
 class Function_normalize_request_Tests(unittest.TestCase):
+
     def test_request_as_keyword_arguments(self):
         request = normalize_request("foo", headers={"bar": "baz"})
 
@@ -88,7 +82,7 @@ class Function_fetch_Tests(AsyncHTTPTestCase):
         with self.assertRaises(errors.AccessControlError) as context:
             yield self.http_client.fetch(request)
 
-        self.assertEqual(context.exception.message, "Pre-flight check failed")
+        self.assertEqual(str(context.exception), "Pre-flight check failed")
 
     @gen_test
     def test_preflight_checks_fail(self):
@@ -109,8 +103,8 @@ class Function_fetch_Tests(AsyncHTTPTestCase):
             yield self.http_client.fetch(request)
 
         self.assertRegexpMatches(
-            context.exception.message,
-            "Headers set(.*'foo'.*) not allowed")
+            str(context.exception),
+            "Headers .*'foo'.* not allowed")
 
     @gen_test
     def test_successful_request(self):

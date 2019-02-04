@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="cors",
@@ -7,8 +7,6 @@ setup(
     author="Nick Coutsos",
     author_email="ncoutsos@synacor.com",
     packages=find_packages(exclude=["*tests*"]),
-    # pip install -e .[test]
-    extras_require = {
-        'test': ['mock', 'tornado', 'requests'],
-    },
+    install_requires=['future', 'requests', 'tornado'],
+    tests_require=['mock'],
 )

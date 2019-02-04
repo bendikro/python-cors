@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from tornado.concurrent import Future
-from tornado.gen import coroutine, Return
+from tornado.gen import Return, coroutine
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest
 
 from cors.errors import AccessControlError
